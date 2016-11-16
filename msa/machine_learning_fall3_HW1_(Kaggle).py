@@ -16,25 +16,20 @@ dataFile = r"C:\Users\mail\Desktop\Files\analytics\machine learning" \
     r"\allState_kaggle\train.csv"
 dat = pd.read_csv(dataFile)
 # id, cat1 - cat116, cont1 - cont14, loss
-# 188319 observations
+# dat.info()
 
 dataFileTest = r"C:\Users\mail\Desktop\Files\analytics\machine learning" \
     r"\allState_kaggle\test.csv"
-datTest = pd.read_csv(dataFile)
-# 125547 observations
-
-with open(dataFile, "rb") as f:
-    temp = f.readlines()
-
-with open(dataFileTest, "rb") as f:
-    tempT = f.readlines()
+datTest = pd.read_csv(dataFileTest)
 
 # %%
-for i in range(20):
-    print(tempT[i][:10])
+dat.id[:10]
+datTest.id[:10]
+# some ids are not in training or test sets provided
 
-for i in range(20):
-    print(temp[i][:5])
+# %%
+dat.describe()
+# summary stats for all continuous vars
 
-print(len(temp))
-print(len(tempT))
+dat.cat3.describe()
+# summary stats of the 'cat3' categorical var
