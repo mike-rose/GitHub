@@ -33,3 +33,10 @@ dat.describe()
 
 dat.cat3.describe()
 # summary stats of the 'cat3' categorical var
+
+dat.cont1.corr(dat.cont2)
+# correlation between 'cont1' and 'cont2' vars
+
+cat = tuple(dat.columns[:117])
+con = tuple(dat.columns[[0] + range(117, 132)])
+# tuples of categorical and continuous variables
