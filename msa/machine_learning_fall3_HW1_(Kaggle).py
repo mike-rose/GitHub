@@ -38,6 +38,3 @@ for i in range(20):
 
 print(len(temp))
 print(len(tempT))
-
-len(temp[3])
-len(tempT[3])
