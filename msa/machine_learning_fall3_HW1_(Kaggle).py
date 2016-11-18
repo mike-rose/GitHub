@@ -24,8 +24,8 @@ con = dat.columns[117:132]
 testCon = datTest[datTest.columns[117:131]]
 # tiny subset for printing
 datMini = dat[:20]
-train = dat[1:131]
-test = datTest[1:131]
+train = dat[dat.columns[1:131]]
+test = datTest[datTest.columns[1:131]]
 # ___ need to partition data eventually here ___
 
 # %% =========================================
@@ -82,7 +82,23 @@ df[~(np.abs(df.Data-df.Data.mean())>(3*df.Data.std()))] #or if you prefer the ot
 ##### OH BOY
 import numpy as np
 from sklearn import linear_model
-
+from sklearn.ensemble import RandomForestClassifier
 clf = linear_model.SGDRegressor()
 clf.fit(dat[con], dat.loss)
 predictions = clf.predict(testCon)
+len(testCon)
+testCon.shape
+clf.shape
+clf._get_learning_rate_type
+clf.predict(testCon)
+
+#############################
+
+import random
+sm_train = random.sample(dat, 10000)
+
+# log transform the label variable
+lloss = np.log(y)
+lloss.hist(bins=300)
+len(train)
+len(y)
