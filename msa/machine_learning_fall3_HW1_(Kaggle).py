@@ -8,6 +8,9 @@ from matplotlib import pyplot as plt
 import seaborn as sns
 import numpy as np
 from scipy import stats
+import random
+from sklearn import linear_model, tree
+from sklearn.ensemble import RandomForestClassifier
 
 # %% IMPORT DATA
 path = 'C:/Users/mail/analytics/machinelearning/allState/'
@@ -18,15 +21,7 @@ dataFileTest = path + 'raw/test.csv'
 datTest = pd.read_csv(dataFileTest)
 
 # %% ORGANIZE DATA
-# list of categorical and continuous variables
-cat = dat.columns[1:117]
-con = dat.columns[117:132]
-testCon = datTest[datTest.columns[117:131]]
-# tiny subset for printing
-datMini = dat[:20]
-train = dat[dat.columns[1:131]]
-test = datTest[datTest.columns[1:131]]
-# ___ need to partition data eventually here ___
+# how to slice: dat.loc[:,:] or by index: dat.iloc[:,:]
 
 # %% =========================================
 # ========= CATEGORICAL EXPLORATION ==========
@@ -59,10 +54,6 @@ cat_SSt.sort(['unique', 'freq'])
 dat[con].plot(kind='box', title="distributions of continuous variables")
 dat[con].hist()
 
-# default heatmap of correlations
-corr = dat[con].corr()
-
-
 # seaborn's clustermap of correlations
 corr2 = corr.mul(100).astype(int)
 sns.clustermap(data=corr2, annot=True, fmt='d', cmap='seismic_r')
@@ -74,31 +65,4 @@ sns.clustermap(data=corr2, annot=True, fmt='d', cmap='seismic_r')
 y = dat['loss']
 y.plot.hist(bins=1000)
 
-
-dat[dat.loss>20000] #keep only the ones that are within +3 to -3 standard deviations in the column 'Data'.
-df[~(np.abs(df.Data-df.Data.mean())>(3*df.Data.std()))] #or if you prefer the other way around
-
-   
-##### OH BOY
-import numpy as np
-from sklearn import linear_model
-from sklearn.ensemble import RandomForestClassifier
-clf = linear_model.SGDRegressor()
-clf.fit(dat[con], dat.loss)
-predictions = clf.predict(testCon)
-len(testCon)
-testCon.shape
-clf.shape
-clf._get_learning_rate_type
-clf.predict(testCon)
-
 #############################
-
-import random
-sm_train = random.sample(dat, 10000)
-
-# log transform the label variable
-lloss = np.log(y)
-lloss.hist(bins=300)
-len(train)
-len(y)
