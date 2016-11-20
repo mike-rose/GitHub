@@ -31,7 +31,7 @@ varList = list(dat.columns.values)
 dat[varList[1:73]] = dat[varList[1:73]].replace('A', 1)
 dat[varList[1:73]] = dat[varList[1:73]].replace('B', 0)
 
-# %% DEFINE FUNCTIONS
+ # %% DEFINE FUNCTIONS
 def partitionData(dt, n=0, ptrain=0.7):
     if n == 0:
         n = len(dt)
@@ -78,26 +78,22 @@ def score(logy, logyhat):
 #             srs[i] = srs[i].lower()
 #     dat[col] = srs
 #==============================================================================
-#==============================================================================
-# uniqueLevels = [dat.iloc[:, i].unique() for i in range(73, 117)]
-# levelFreqs = [dat.iloc[:, i].value_counts() for i in range(73, 117)]
-# pd.DataFrame(levelFreqs[:10]).plot(kind='bar')
-# pd.DataFrame(levelFreqs[10:20]).plot(kind='bar')
-# pd.DataFrame(levelFreqs[20:28]).plot(kind='bar')
-# pd.DataFrame(levelFreqs[28:34]).plot(kind='bar')
-# pd.DataFrame(levelFreqs[34:38]).plot(kind='bar')
-# pd.DataFrame(levelFreqs[38:41]).plot(kind='bar')
-# pd.DataFrame(levelFreqs[41:43]).plot(kind='bar')
-# pd.DataFrame(levelFreqs[42:44]).plot(kind='bar')
-#==============================================================================
+uniqueLevels = [dat.iloc[:, i].unique() for i in range(73, 117)]
+levelFreqs = [dat.iloc[:, i].value_counts() for i in range(73, 117)]
 
 # these are helpful for knowing which levels can be grouped
 #==============================================================================
-# dat.boxplot(column='loss', by='cat108')
-# dat.boxplot(column='loss', by='cat116')
-# dat.hist(column='loss', by='cat108')
-# dat.hist(column='loss', by='cat113')
+# i = 0
+# for cvar in varList[73:117]:
+#     dat.boxplot(column='loss', by=cvar)
+#     plt.savefig(path + '/images/charts/'+ str(cvar) +'lossbox.png')
+#     levelFreqs[i].sort_index().plot(kind='bar')
+#     plt.savefig(path + '/images/charts/'+ str(cvar) +'barchart.png')
+#     plt.close()
+#     i = i + 1
 #==============================================================================
+
+# dat.hist(column='loss', by='cat108')
 
 #==============================================================================
 # dat.loss.describe()
