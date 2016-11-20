@@ -43,12 +43,11 @@ dat.loss = np.log(dat.loss)
 dat = dat[dat['loss'] > 4.3] # chop 31 smallest (loss) obs
 dat = dat[dat['loss'] < 10.7] # chop 15 largest (loss) obs
 
-#==============================================================================
-# varlst = list(dat.columns.values)
-# cat_list = range(1, 117)  # exclude ID
-# con_list = range(117, 131)  # exclude loss
-# bnry_list = range(1, 73)
-#==============================================================================
+varList = list(dat.columns.values)
+catList = range(1, 117)  # exclude ID
+conList = range(117, 131)  # exclude loss
+binaryList = range(1, 73)
+notBinaryList = range(73, 117)
 
 # %% SUBSET DATA
 sub0 = dat.sample(n=100, random_state=8)
@@ -85,34 +84,36 @@ nb = varlst[73:117]  # non-binary cat var names
 # ONE WAY ANOVA -- CHECK FOR DIFFERENCES ACROSS LEVELS OF EACH CATEGORY VAR
 
 
-
-
-
-
-
-for v in nb[:1]:
-    # do stuff with v cat var
-    categories = dat.loc[:, v].unique()
-    listObsPerLevel = []
-    for cat in categories:
-        listObsPerLevel.append(dat.loss[dat.loc[:, v] == cat])
-        levelCounts = dat.loc[:, v].value_counts()
-        cat1 = levelCounts[levelCounts < 200]
-#    cat2 = t[t >= 200]
-    print(v+' '+str(len(t))+' levels:' + cat1.to_string())
-    print(cat2.to_string())
-
-stats.f_oneway(*listObsPerLevel)
-
+np.mean(v.sample(frac=0.01))
+varList = list(dat.columns.values)
 dat.loss.describe()
 lossMean = 7.6857
 lossStd = 0.8094
 
-stats.ttest_1samp(listObsPerLevel[], lossMean)
+# %%
+# SADLY. NEED TO BOOKMARK THIS CATEGORICAL WORK MAKE A PREDICTION
+
+oneCol = dat.iloc[:, 98]
+
+levels = oneCol.unique()
+lossByLevel = []
+tinyLevels = []
+for level in levels:
+    # create a Series of the logLoss values for given (variable, level)
+    oneLevel = dat.loss[oneCol == level]
+
+    if len(oneLevel) < 50:
+        testRes = stats.ttest_1samp(oneLevel, lossMean)
+        t = [var, level, len(oneLevel), testRes]
+        tinyLevels.append(t)
+    else:
+        lossByLevel.append(oneLevel)
+
+print(tinyLevels)
+print(lossByLevel)
 
 
 #take 100 random samples of size whatever, use their means in ttest
-
 
 # %% =========================================
 # ========== CONTINUOUS EXPLORATION ==========
