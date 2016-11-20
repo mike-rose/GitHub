@@ -45,44 +45,100 @@ varList = list(dat.columns.values)
 dat = dat[dat['loss'] > 4.3] # chop 31 smallest (loss) obs
 dat = dat[dat['loss'] < 10.7] # chop 15 largest (loss) obs
 
+meanLoss=np.mean(dat.loss)
+
 # A's and B's to 1's and 0's
 dat[varList[1:73]] = dat[varList[1:73]].replace('A', 1)
 dat[varList[1:73]] = dat[varList[1:73]].replace('B', 0)
 
+twoLetters = ['cat109', 'cat110', 'cat112', 'cat113', 'cat116']
 
-#==============================================================================
-# catList = range(1, 117)  # exclude ID
-# conList = range(117, 131)  # exclude loss
-# binaryList = range(1, 73)
-# notBinaryList = range(73, 117)
-# 
+ones = [x for x in varList if x not in twoLetters]            
+# Lower-case two letter values 
+# Put them in order after singltons
+
+for col in twoLetters:
+    srs = list(dat[col])
+    for i in range(len(srs)):
+        if len(srs[i]) == 2:
+            srs[i] = srs[i].lower()
+    dat[col] = srs
+ 
 #==============================================================================
 # %% SUBSET DATA
-sub0 = dat.sample(n=100, random_state=8)
-trn0 = sub0.sample(frac=0.7, random_state=8)
-tst0 = sub0.drop(trn0.index)
+#==============================================================================
+# sub0 = dat.sample(n=100, random_state=8)
+# trn0 = sub0.sample(frac=0.7, random_state=8)
+# tst0 = sub0.drop(trn0.index)
+# 
+# sub1 = dat.sample(n=1000, random_state=8)
+# trn1 = sub1.sample(frac=0.7, random_state=8)
+# tst1 = sub1.drop(trn1.index)
+# 
+# sub2 = dat.sample(n=10000, random_state=8)
+# trn2 = sub2.sample(frac=0.7, random_state=8)
+# tst2 = sub2.drop(trn2.index)
+#==============================================================================
 
-sub1 = dat.sample(n=1000, random_state=8)
-trn1 = sub1.sample(frac=0.7, random_state=8)
-tst1 = sub1.drop(trn1.index)
+def partitionData(dt, n=0, ptrain=0.7):
+    if n == 0:
+        n = len(dt)
+    dt=dt.sample(n)
+    train = dt.sample(frac=ptrain)
+    test = dt.drop(train.index)
+    d = {'train': train, 'test': test}
+    return d
+  
+def Xy(dt):
+    X = dt.iloc[:, :-2]
+    y = dt.iloc[:, -1]
+    return [X, y]
 
-sub2 = dat.sample(n=10000, random_state=8)
-trn2 = sub2.sample(frac=0.7, random_state=8)
-tst2 = sub2.drop(trn2.index)
+#==============================================================================
+# def ftest(dt):
+#     pass
+# 
+# def ttest(dt, col, lev, n=50, rep=1, mu=meanLoss, seed=None):
+#     sub1 = dt.loss[col == lev]
+#     if len(sub1) <= 50:
+#         pass
+#     s = dt.sample(n, random_state=seed)
+#     t,p = stats.ttest_1samp(dt, mu)
+#     return [t,p]
+#==============================================================================
+
 
 # %% =========================================
 # ========= CATEGORICAL EXPLORATION ==========
 # ============================================
 
-# which cats are only one letter?
+#==============================================================================
+# uniqueLevels = [dat.iloc[:, i].unique() for i in range(73, 117)]
+# for u in uniqueLevels:
+#     print(len(u))
+#==============================================================================
+
+levelFreqs = [dat.iloc[:, i].value_counts() for i in range(73, 117)]
+              
+for l in levelFreqs:
+    print(len(l))
+    pass
+
+# inform multilevel categorical variable binning
+pd.DataFrame(levelFreqs[:10]).plot(kind='bar')
+pd.DataFrame(levelFreqs[10:20]).plot(kind='bar')
+pd.DataFrame(levelFreqs[20:28]).plot(kind='bar')
+pd.DataFrame(levelFreqs[28:34]).plot(kind='bar')
+pd.DataFrame(levelFreqs[34:38]).plot(kind='bar')
+pd.DataFrame(levelFreqs[38:41]).plot(kind='bar')
+pd.DataFrame(levelFreqs[41:43]).plot(kind='bar')
+pd.DataFrame(levelFreqs[42:44]).plot(kind='bar')
 
 # these are helpful for knowing which levels can be grouped
-#==============================================================================
-# dat.boxplot(column='loss', by='cat108')
-# dat.boxplot(column='loss', by='cat100')
-# dat.hist(column='loss', by='cat108')
-# dat.hist(column='loss', by='cat113')
-#==============================================================================
+dat.boxplot(column='loss', by='cat108')
+dat.boxplot(column='loss', by='cat116')
+dat.hist(column='loss', by='cat108')
+dat.hist(column='loss', by='cat113')
 
 #==============================================================================
 # dat.cat113.describe()
@@ -93,9 +149,11 @@ tst2 = sub2.drop(trn2.index)
 # looking like I categories with fewer than 200 observations \
 # should be grouped or dropped - for all cat vars
 
-dat.loss.describe()
-lossMean = 7.6857
-lossStd = 0.8094
+#==============================================================================
+# dat.loss.describe()
+# lossMean = 7.6857
+# lossStd = 0.8094
+#==============================================================================
 
 # %%
 # SADLY. NEED TO BOOKMARK THIS CATEGORICAL WORK MAKE A PREDICTION
@@ -152,6 +210,9 @@ sns.clustermap(data=corr2, annot=True, fmt='d', cmap='seismic_r')
 # %% =========================================
 # ========= 
 # ============================================
+
+
+
 tree0 = tree.DecisionTreeRegressor()
 tree0 = tree0.fit(trn1)
 pred = tree0.predict(tst0)
@@ -162,7 +223,7 @@ X = trn1.loc[:, 'cont1':'cont14']
 y = trn1['loss']
 
 tree1 = tree.DecisionTreeRegressor()
-tree1 = tree1.fit(X, y)
+tree1 = tree1.fit(*t)
 pred1 = tree1.predict(tst1.loc[:, 'cont1':'cont14'])
 pred1
 tst1['loss']
