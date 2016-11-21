@@ -67,7 +67,19 @@ def toBinary(s, ones):
 #==============================================================================
 # dat = datFresh.copy()
 #==============================================================================
-    
+
+# %% ================ DUMMY VARS ========================
+
+dum = varList[1:117]
+
+dat2 = pd.get_dummies(dat, dum, '_', columns=dum, drop_first=True)
+
+cols = list(dat2.columns.values)
+cols.pop(cols.index('loss'))
+dat2 = dat2[cols + ['loss']]
+
+dat2.info()
+
 # %%  ===================== BINARY ====================== 
 # A's and B's to 1's and 0's
 dat[varList[1:73]] = dat[varList[1:73]].replace('A', int(1))
@@ -173,14 +185,16 @@ for pair in to1or0:
 # ============================================
 # ============================================
 # ============================================
-newBins = [74, 77, 82, 85, 86, 87, 89, 90, 92, 93, 95]
-newBinVars = [varList[i] for i in newBins]
-
-numVars = varList[0:73] + newBinVars + varList[117:]
-numDat = dat[numVars]
-
-pdat = partitionData(numDat)
-
+#==============================================================================
+# newBins = [74, 77, 82, 85, 86, 87, 89, 90, 92, 93, 95]
+# newBinVars = [varList[i] for i in newBins]
+# 
+# numVars = varList[0:73] + newBinVars + varList[117:]
+# numDat = dat[numVars]
+# 
+# pdat = partitionData(numDat)
+#==============================================================================
+pdat = partitionData(dat2)
 # ======= RANDOM FOREST ==============
 rfr = RandomForestRegressor()
 rfr_m1 = rfr.fit(*Xy(pdat['train']))
