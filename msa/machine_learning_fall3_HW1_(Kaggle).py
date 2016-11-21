@@ -27,7 +27,39 @@ dat.loss = np.log1p(dat.loss)
 
 varList = list(dat.columns.values)
 
- # %% DEFINE FUNCTIONS
+# second alphabet goes after first A ... aa 
+twoLetters = ['cat109', 'cat110', 'cat112', 'cat113', 'cat116']
+
+for col in twoLetters:
+    srs = list(dat[col])
+    for i in range(len(srs)):
+        if len(srs[i]) == 2:
+            srs[i] = srs[i].lower()
+    dat[col] = srs
+
+# pandas category dtypes for speed
+for cat in varList[1:117]:
+    dat[cat] = dat[cat].astype('category')
+
+# convert select categorical variables to become ordinal
+# selections made based on plots in CATEGORICAL EXPLORATION section
+# and ttest results
+ordinal = range(1,73) + [74, 85, 90, 101, 102, 103, 104, 105, 106, 111, 114]
+
+for i in ordinal:
+    dat[varList[i]] = dat[varList[i]].cat.codes
+
+# %% ================ DUMMY VARS ========================
+dum = dat.select_dtypes(['category']).columns.values
+dat = pd.get_dummies(dat, dum, '_', columns=dum, drop_first=True)
+
+cols = list(dat.columns.values)
+cols.pop(cols.index('loss'))
+cols = cols + ['loss']
+
+dat = dat[cols]
+
+# %% DEFINE FUNCTIONS
 def partitionData(dt, n=0, ptrain=0.7):
     if n == 0:
         n = len(dt)
@@ -38,17 +70,13 @@ def partitionData(dt, n=0, ptrain=0.7):
     return d
   
 def Xy(dt):
-    X = dt.iloc[:, :-2]
+    X = dt.iloc[:, :-1]
     y = dt.iloc[:, -1]
     return [X, y]
 
 def score(logy, logyhat):
     s = mae(np.expm1(logy), np.expm1(logyhat))
     return s
-
-#==============================================================================
-# datFresh = dat.copy()
-#==============================================================================
     
 def toBinary(s, ones):
     #print(str(s.unique)+' are all cats')
@@ -64,56 +92,11 @@ def toBinary(s, ones):
     sr = s
     return sr
 
-#==============================================================================
-# dat = datFresh.copy()
-#==============================================================================
-
-# %% ================ DUMMY VARS ========================
-
-dum = varList[1:117]
-
-dat2 = pd.get_dummies(dat, dum, '_', columns=dum, drop_first=True)
-
-cols = list(dat2.columns.values)
-cols.pop(cols.index('loss'))
-dat2 = dat2[cols + ['loss']]
-
-dat2.info()
-
-# %%  ===================== BINARY ====================== 
-# A's and B's to 1's and 0's
-dat[varList[1:73]] = dat[varList[1:73]].replace('A', int(1))
-dat[varList[1:73]] = dat[varList[1:73]].replace('B', int(0))
-
-# Combine categories to create binary variables
-to1or0 = [  (74, list('BC')),
-            (77, list('ACD')),
-            (82, list('ABC')),
-            (85, list('CD')),
-            (86, list('BD')),
-            (87, list('AB')),
-            (89, list('A')),
-            (90, list('A')),
-            (92, list('AH')),
-            (93, list('A')),
-            (95, list('ACD'))]
-
-for pair in to1or0:
-    dat[varList[pair[0]]] = toBinary(dat[varList[pair[0]]], pair[1])
-
-#==============================================================================
-# for pair in to1or0:
-#     print(dat[varList[pair[0]]].unique())
-#==============================================================================
-
-dat.loss.describe()
+# global loss quartiles
 mu = np.mean(dat.loss)
 Q1 = np.percentile(dat.loss, 25)
-Q3 = np.percentile(dat.loss, 75)
-
-def ftest(dt):
-    pass
-
+Q3 = np.percentile(dat.loss, 75)    
+    
 def ttest(x, y=dat['loss']):
     lev = x.unique()
     tpvals = {}
@@ -121,42 +104,63 @@ def ttest(x, y=dat['loss']):
         tstat, pval = stats.ttest_1samp(y[x==l], mu)
         tpvals[l] = (mu - np.mean(y[x==l]), len(x[x==l]), pval)
     return tpvals
-    
-ttest(dat['cat94'])
+
+
+# %%  ===================== BINARY ====================== 
+# A's and B's to 1's and 0's
+#==============================================================================
+# dat[varList[1:73]] = dat[varList[1:73]].replace('A', int(1))
+# dat[varList[1:73]] = dat[varList[1:73]].replace('B', int(0))
+# 
+# # Combine categories to create binary variables
+# to1or0 = [  (74, list('BC')),
+#             (77, list('ACD')),
+#             (82, list('ABC')),
+#             (85, list('CD')),
+#             (86, list('BD')),
+#             (87, list('AB')),
+#             (89, list('A')),
+#             (90, list('A')),
+#             (92, list('AH')),
+#             (93, list('A')),
+#             (95, list('ACD'))]
+# 
+# for pair in to1or0:
+#     dat[varList[pair[0]]] = toBinary(dat[varList[pair[0]]], pair[1])
+#==============================================================================
+
+#==============================================================================
+# for pair in to1or0:
+#     print(dat[varList[pair[0]]].unique())
+#==============================================================================
+
+# %% ================== ORDINAL VARS =====================
+# =============================================================
 
 
 # %% =========================================
 # ========= CATEGORICAL EXPLORATION ==========
 #=============================================
 #==============================================================================
-# datSort = dat.sort_values('loss')
-# dat.loss.hist(bins=12000)
-#==============================================================================
-#==============================================================================
-# for col in twoLetters:
-#     srs = list(dat[col])
-#     for i in range(len(srs)):
-#         if len(srs[i]) == 2:
-#             srs[i] = srs[i].lower()
-#     dat[col] = srs
-#==============================================================================
 
-uniqueLevels = [dat.iloc[:, i].unique() for i in range(73, 117)]
-levelFreqs = [dat.iloc[:, i].value_counts() for i in range(73, 117)]
-
-# these are helpful for knowing which levels can be grouped
-i = 0
-for cvar in varList[73:117]:
-    dat.boxplot(column='loss', by=cvar)
-    leg = levelFreqs[i].sort_index()
-    plt.xlabel(zip(leg.keys(), sorted(leg, reverse=True)))
-    plt.plot([Q1]*400, lw=1, c='orange')
-    plt.plot([mu]*400, lw=1, c='orange')
-    plt.plot([Q3]*400, lw=1, c='orange')
-    plt.savefig(path + '/images/charts2/'+ str(cvar) +'boxCount.png')
-    plt.close()
-    i = i + 1
-    
+#==============================================================================
+# uniqueLevels = [dat.iloc[:, i].unique() for i in range(73, 117)]
+# levelFreqs = [dat.iloc[:, i].value_counts() for i in range(73, 117)]
+# 
+# i = 0
+# for cvar in varList[73:117]:
+#     dat.boxplot(column='loss', by=cvar)
+#     leg = levelFreqs[i].sort_index()
+#     plt.xlabel(zip(leg.keys(), sorted(leg, reverse=True)))
+#     plt.plot([Q1]*400, lw=1, c='orange')
+#     plt.plot([mu]*400, lw=1, c='orange')
+#     plt.plot([Q3]*400, lw=1, c='orange')
+#     plt.savefig(path + '/images/charts2/'+ str(cvar) +'boxCount.png')
+#     leg.plot(kind='bar')
+#     plt.savefig(path + '/images/charts2/'+ str(cvar) +'barChart.png')
+#     plt.close()
+#     i = i + 1
+#==============================================================================
 #==============================================================================
 # five80 = dat[dat.loss == 580]
 # five80.shape
@@ -188,7 +192,7 @@ for cvar in varList[73:117]:
 # pdat = partitionData(numDat)
 #==============================================================================
 # %% model ready data is named pdat
-pdat = partitionData(dat2)
+pdat = partitionData(dat)
 
 
 # %% ======= RANDOM FOREST ==============
