@@ -106,23 +106,25 @@ for pair in to1or0:
 #     print(dat[varList[pair[0]]].unique())
 #==============================================================================
 
-#==============================================================================
-# dat['cat74'].unique()    
-# dat['cat74'] = toBinary(dat['cat74'], ['A']) 
-# dat['cat74'].unique()
-#==============================================================================
-#==============================================================================
-# def ftest(dt):
-#     pass
-# 
-# def ttest(dt, col, lev, n=50, rep=1, mu=meanLoss, seed=None):
-#     sub1 = dt.loss[col == lev]
-#     if len(sub1) <= 50:
-#         pass
-#     s = dt.sample(n, random_state=seed)
-#     t,p = stats.ttest_1samp(dt, mu)
-#     return [t,p]
-#==============================================================================
+dat.loss.describe()
+mu = np.mean(dat.loss)
+Q1 = np.percentile(dat.loss, 25)
+Q3 = np.percentile(dat.loss, 75)
+
+def ftest(dt):
+    pass
+
+def ttest(x, y=dat['loss']):
+    lev = x.unique()
+    tpvals = {}
+    for l in lev:
+        tstat, pval = stats.ttest_1samp(y[x==l], mu)
+        tpvals[l] = (tstat, pval)
+    return tpvals
+    
+p = ttest(dat['cat94'])
+
+p
 
 # %% =========================================
 # ========= CATEGORICAL EXPLORATION ==========
@@ -140,30 +142,22 @@ for pair in to1or0:
 #     dat[col] = srs
 #==============================================================================
 
-#==============================================================================
-# uniqueLevels = [dat.iloc[:, i].unique() for i in range(73, 117)]
-# levelFreqs = [dat.iloc[:, i].value_counts() for i in range(73, 117)]
-#==============================================================================
+uniqueLevels = [dat.iloc[:, i].unique() for i in range(73, 117)]
+levelFreqs = [dat.iloc[:, i].value_counts() for i in range(73, 117)]
 
 # these are helpful for knowing which levels can be grouped
-#==============================================================================
-# i = 0
-# for cvar in varList[73:117]:
-#     dat.boxplot(column='loss', by=cvar)
-#     plt.savefig(path + '/images/charts/'+ str(cvar) +'lossbox.png')
-#     levelFreqs[i].sort_index().plot(kind='bar')
-#     plt.savefig(path + '/images/charts/'+ str(cvar) +'barchart.png')
-#     plt.close()
-#     i = i + 1
-#==============================================================================
-
-# dat.hist(column='loss', by='cat108')
-
-#==============================================================================
-# dat.loss.describe()
-# meanLoss=np.mean(dat.loss)
-#==============================================================================
-
+i = 0
+for cvar in varList[73:117]:
+    dat.boxplot(column='loss', by=cvar)
+    leg = levelFreqs[i].sort_index()
+    plt.xlabel(zip(leg.keys(), sorted(leg, reverse=True)))
+    plt.plot([Q1]*400, lw=1, c='orange')
+    plt.plot([mu]*400, lw=1, c='orange')
+    plt.plot([Q3]*400, lw=1, c='orange')
+    plt.savefig(path + '/images/charts2/'+ str(cvar) +'boxCount.png')
+    plt.close()
+    i = i + 1
+    
 #==============================================================================
 # five80 = dat[dat.loss == 580]
 # five80.shape
