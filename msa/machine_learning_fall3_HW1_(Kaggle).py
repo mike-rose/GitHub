@@ -17,15 +17,14 @@ path = 'C:/Users/mail/analytics/machinelearning/allState/'
 dataFile = path + 'raw/train.csv'
 dat = pd.read_csv(dataFile)
 
-#==============================================================================
-# dataFileTest = path + 'raw/test.csv'
-# datTest = pd.read_csv(dataFileTest)
-#==============================================================================
+dataFileTest = path + 'raw/test.csv'
+datTest = pd.read_csv(dataFileTest)
 
 # %% DATA TRANSFORMATION
 dat.loss = np.log1p(dat.loss)
 
 varList = list(dat.columns.values)
+vL = list(datTest.columns.values)
 
 # second alphabet goes after first A ... aa 
 twoLetters = ['cat109', 'cat110', 'cat112', 'cat113', 'cat116']
@@ -40,14 +39,18 @@ for col in twoLetters:
 # pandas category dtypes for speed
 for cat in varList[1:117]:
     dat[cat] = dat[cat].astype('category')
+# pandas category dtypes for speed
+for cat in vL[1:117]:
+    datTest[cat] = datTest[cat].astype('category')
 
 # convert select categorical variables to become ordinal
 # selections made based on plots in CATEGORICAL EXPLORATION section
 # and ttest results
-ordinal = range(1,73) + [74, 85, 90, 101, 102, 103, 104, 105, 106, 111, 114]
+ordinal = range(1,73) + [105]
 
 for i in ordinal:
     dat[varList[i]] = dat[varList[i]].cat.codes
+    datTest[vL[i]] = datTest[vL[i]].cat.codes
 
 # %% ================ DUMMY VARS ========================
 dum = dat.select_dtypes(['category']).columns.values
@@ -58,6 +61,32 @@ cols.pop(cols.index('loss'))
 cols = cols + ['loss']
 
 dat = dat[cols]
+
+# ###################
+dum = datTest.select_dtypes(['category']).columns.values
+datTest = pd.get_dummies(datTest, dum, '_', columns=dum, drop_first=True)
+
+# ###################
+testCols = list(datTest.columns.values)
+
+testCols = [i for i in testCols if i in cols]
+putInTest = [i for i in cols if i not in testCols]
+
+blank = pd.DataFrame(index=range(len(datTest)), columns=putInTest)
+blank = blank.fillna(0) # with 0s rather than NaNs
+blank.describe
+
+test = pd.concat([datTest, blank], axis=1)
+
+wtf = [i for i in list(test.columns.values) if i not in list(dat.columns.values)]
+
+testCols = list(test.columns.values)
+testCols.pop(testCols[wtf])
+del test['loss']
+
+for i in wtf:
+    del test[i]
+
 
 # %% DEFINE FUNCTIONS
 def partitionData(dt, n=0, ptrain=0.7):
@@ -78,19 +107,21 @@ def score(logy, logyhat):
     s = mae(np.expm1(logy), np.expm1(logyhat))
     return s
     
-def toBinary(s, ones):
-    #print(str(s.unique)+' are all cats')
-    #print(str(ones)+ ' are ones')
-    zeros = [x for x in s.unique() if x not in ones]
-    #print(str(zeros)+ ' are zeros')
-    for l in ones:
-        s = s.replace(l, int(1))
-        #print(str(l)+' is now 1')
-    for l2 in zeros:
-        s = s.replace(l2, int(0))
-        #print(str(l2)+' is now 0')
-    sr = s
-    return sr
+#==============================================================================
+# def toBinary(s, ones):
+#     #print(str(s.unique)+' are all cats')
+#     #print(str(ones)+ ' are ones')
+#     zeros = [x for x in s.unique() if x not in ones]
+#     #print(str(zeros)+ ' are zeros')
+#     for l in ones:
+#         s = s.replace(l, int(1))
+#         #print(str(l)+' is now 1')
+#     for l2 in zeros:
+#         s = s.replace(l2, int(0))
+#         #print(str(l2)+' is now 0')
+#     sr = s
+#     return sr
+#==============================================================================
 
 # global loss quartiles
 mu = np.mean(dat.loss)
@@ -191,6 +222,8 @@ def ttest(x, y=dat['loss']):
 # 
 # pdat = partitionData(numDat)
 #==============================================================================
+# %% add dummy variable columns that aren't in test set
+
 # %% model ready data is named pdat
 pdat = partitionData(dat)
 
@@ -202,6 +235,18 @@ test_X, test_y = Xy(pdat['test'])
 
 pred_y = rfr_m1.predict(test_X)
 print(score(test_y, pred_y))
+
+# %% ========== TEST KAGGLE ===============
+
+
+predicted = rfr_m1.predict(test)
+
+# %% ============ PRINT PREDICTIONS ===========
+import csv
+with open(path+'pred.csv', 'wb') as f:
+    wr = csv.writer(f, quoting=csv.QUOTE_ALL)
+    for i in range(len(datTest)):
+        wr.writerow([datTest.id[i], predicted[i]])
 
 
 # %% ================== SVM =================
