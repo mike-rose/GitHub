@@ -119,12 +119,11 @@ def ttest(x, y=dat['loss']):
     tpvals = {}
     for l in lev:
         tstat, pval = stats.ttest_1samp(y[x==l], mu)
-        tpvals[l] = (tstat, pval)
+        tpvals[l] = (mu - np.mean(y[x==l]), len(x[x==l]), pval)
     return tpvals
     
-p = ttest(dat['cat94'])
+ttest(dat['cat94'])
 
-p
 
 # %% =========================================
 # ========= CATEGORICAL EXPLORATION ==========
