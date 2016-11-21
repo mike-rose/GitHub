@@ -194,8 +194,11 @@ for pair in to1or0:
 # 
 # pdat = partitionData(numDat)
 #==============================================================================
+# %% model ready data is named pdat
 pdat = partitionData(dat2)
-# ======= RANDOM FOREST ==============
+
+
+# %% ======= RANDOM FOREST ==============
 rfr = RandomForestRegressor()
 rfr_m1 = rfr.fit(*Xy(pdat['train']))
 test_X, test_y = Xy(pdat['test'])
@@ -204,7 +207,7 @@ pred_y = rfr_m1.predict(test_X)
 print(score(test_y, pred_y))
 
 
-# ================== SVM =================
+# %% ================== SVM =================
 # needs major dimension reduction first
 #==============================================================================
 # pdat = partitionData(dat[varList[117:]])
@@ -215,8 +218,16 @@ print(score(test_y, pred_y))
 # print(score(test_y, pred_y))
 #==============================================================================
 
-# ================= GRADIENT BOOSTING ===============
+# %% ================= GRADIENT BOOSTING ===============
+params = {'n_estimators': 500, 'max_depth': 4, 'min_samples_split': 2,
+          'learning_rate': 0.01, 'loss': 'ls'}
+gbr = GradientBoostingRegressor(**params)
 
+gbr_m1 = gbr.fit(*Xy(pdat['train']))
+test_X, test_y = Xy(pdat['test'])
+
+pred_y = gbr_m1.predict(test_X)
+print(score(test_y, pred_y))
 
 # ============== NEURAL NETWORKS ====================
 
