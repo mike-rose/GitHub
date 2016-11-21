@@ -27,10 +27,6 @@ dat.loss = np.log1p(dat.loss)
 
 varList = list(dat.columns.values)
 
-# A's and B's to 1's and 0's
-dat[varList[1:73]] = dat[varList[1:73]].replace('A', 1)
-dat[varList[1:73]] = dat[varList[1:73]].replace('B', 0)
-
  # %% DEFINE FUNCTIONS
 def partitionData(dt, n=0, ptrain=0.7):
     if n == 0:
@@ -49,7 +45,60 @@ def Xy(dt):
 def score(logy, logyhat):
     s = mae(np.expm1(logy), np.expm1(logyhat))
     return s
+
+#==============================================================================
+# datFresh = dat.copy()
+#==============================================================================
     
+def toBinary(s, ones):
+    #print(str(s.unique)+' are all cats')
+    #print(str(ones)+ ' are ones')
+    zeros = [x for x in s.unique() if x not in ones]
+    #print(str(zeros)+ ' are zeros')
+    for l in ones:
+        s = s.replace(l, int(1))
+        #print(str(l)+' is now 1')
+    for l2 in zeros:
+        s = s.replace(l2, int(0))
+        #print(str(l2)+' is now 0')
+    sr = s
+    return sr
+
+#==============================================================================
+# dat = datFresh.copy()
+#==============================================================================
+    
+# %%  ===================== BINARY ====================== 
+# A's and B's to 1's and 0's
+dat[varList[1:73]] = dat[varList[1:73]].replace('A', int(1))
+dat[varList[1:73]] = dat[varList[1:73]].replace('B', int(0))
+
+# Combine categories to create binary variables
+to1or0 = [  (74, list('BC')),
+            (77, list('ACD')),
+            (82, list('ABC')),
+            (85, list('CD')),
+            (86, list('BD')),
+            (87, list('AB')),
+            (89, list('A')),
+            (90, list('A')),
+            (92, list('AH')),
+            (93, list('A')),
+            (95, list('ACD'))]
+
+for pair in to1or0:
+    dat[varList[pair[0]]] = toBinary(dat[varList[pair[0]]], pair[1])
+
+#==============================================================================
+# for pair in to1or0:
+#     print(dat[varList[pair[0]]].unique())
+#==============================================================================
+
+#==============================================================================
+# dat['cat74'].unique()    
+# dat['cat74'] = toBinary(dat['cat74'], ['A']) 
+# dat['cat74'].unique()
+#==============================================================================
 #==============================================================================
 # def ftest(dt):
 #     pass
@@ -78,8 +127,11 @@ def score(logy, logyhat):
 #             srs[i] = srs[i].lower()
 #     dat[col] = srs
 #==============================================================================
-uniqueLevels = [dat.iloc[:, i].unique() for i in range(73, 117)]
-levelFreqs = [dat.iloc[:, i].value_counts() for i in range(73, 117)]
+
+#==============================================================================
+# uniqueLevels = [dat.iloc[:, i].unique() for i in range(73, 117)]
+# levelFreqs = [dat.iloc[:, i].value_counts() for i in range(73, 117)]
+#==============================================================================
 
 # these are helpful for knowing which levels can be grouped
 #==============================================================================
@@ -121,9 +173,12 @@ levelFreqs = [dat.iloc[:, i].value_counts() for i in range(73, 117)]
 # ============================================
 # ============================================
 # ============================================
+newBins = [74, 77, 82, 85, 86, 87, 89, 90, 92, 93, 95]
+newBinVars = [varList[i] for i in newBins]
 
-numVars = varList[0:73] + varList[117:]
+numVars = varList[0:73] + newBinVars + varList[117:]
 numDat = dat[numVars]
+
 pdat = partitionData(numDat)
 
 # ======= RANDOM FOREST ==============
