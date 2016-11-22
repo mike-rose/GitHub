@@ -27,14 +27,16 @@ varList = list(dat.columns.values)
 vL = list(datTest.columns.values)
 
 # second alphabet goes after first A ... aa 
-twoLetters = ['cat109', 'cat110', 'cat112', 'cat113', 'cat116']
-
-for col in twoLetters:
-    srs = list(dat[col])
-    for i in range(len(srs)):
-        if len(srs[i]) == 2:
-            srs[i] = srs[i].lower()
-    dat[col] = srs
+#==============================================================================
+# twoLetters = ['cat109', 'cat110', 'cat112', 'cat113', 'cat116']
+# 
+# for col in twoLetters:
+#     srs = list(dat[col])
+#     for i in range(len(srs)):
+#         if len(srs[i]) == 2:
+#             srs[i] = srs[i].lower()
+#     dat[col] = srs
+#==============================================================================
 
 # pandas category dtypes for speed
 for cat in varList[1:117]:
@@ -62,15 +64,16 @@ cols = cols + ['loss']
 
 dat = dat[cols]
 
-# ###################
+# %% ################### TEST
 dum = datTest.select_dtypes(['category']).columns.values
 datTest = pd.get_dummies(datTest, dum, '_', columns=dum, drop_first=True)
 
-# ###################
 testCols = list(datTest.columns.values)
+cols = list(dat.columns.values)
 
-testCols = [i for i in testCols if i in cols]
+
 putInTest = [i for i in cols if i not in testCols]
+popTest = [i for i in testCols if i not in cols]
 
 blank = pd.DataFrame(index=range(len(datTest)), columns=putInTest)
 blank = blank.fillna(0) # with 0s rather than NaNs
@@ -78,15 +81,10 @@ blank.describe
 
 test = pd.concat([datTest, blank], axis=1)
 
-wtf = [i for i in list(test.columns.values) if i not in list(dat.columns.values)]
-
-testCols = list(test.columns.values)
-testCols.pop(testCols[wtf])
-del test['loss']
-
-for i in wtf:
+for i in popTest:
     del test[i]
 
+del test['loss']
 
 # %% DEFINE FUNCTIONS
 def partitionData(dt, n=0, ptrain=0.7):
@@ -124,17 +122,19 @@ def score(logy, logyhat):
 #==============================================================================
 
 # global loss quartiles
-mu = np.mean(dat.loss)
-Q1 = np.percentile(dat.loss, 25)
-Q3 = np.percentile(dat.loss, 75)    
-    
-def ttest(x, y=dat['loss']):
-    lev = x.unique()
-    tpvals = {}
-    for l in lev:
-        tstat, pval = stats.ttest_1samp(y[x==l], mu)
-        tpvals[l] = (mu - np.mean(y[x==l]), len(x[x==l]), pval)
-    return tpvals
+#==============================================================================
+# mu = np.mean(dat.loss)
+# Q1 = np.percentile(dat.loss, 25)
+# Q3 = np.percentile(dat.loss, 75)    
+#     
+# def ttest(x, y=dat['loss']):
+#     lev = x.unique()
+#     tpvals = {}
+#     for l in lev:
+#         tstat, pval = stats.ttest_1samp(y[x==l], mu)
+#         tpvals[l] = (mu - np.mean(y[x==l]), len(x[x==l]), pval)
+#     return tpvals
+#==============================================================================
 
 
 # %%  ===================== BINARY ====================== 
@@ -225,30 +225,41 @@ def ttest(x, y=dat['loss']):
 # %% add dummy variable columns that aren't in test set
 
 # %% model ready data is named pdat
-pdat = partitionData(dat)
 
+#==============================================================================
+# pdat = partitionData(dat)
+#==============================================================================
 
 # %% ======= RANDOM FOREST ==============
-rfr = RandomForestRegressor()
-rfr_m1 = rfr.fit(*Xy(pdat['train']))
-test_X, test_y = Xy(pdat['test'])
-
-pred_y = rfr_m1.predict(test_X)
-print(score(test_y, pred_y))
+#==============================================================================
+# rfr = RandomForestRegressor()
+# rfr_m1 = rfr.fit(*Xy(pdat['train']))
+# test_X, test_y = Xy(pdat['test'])
+# 
+# pred_y = rfr_m1.predict(test_X)
+# print(score(test_y, pred_y))
+#==============================================================================
 
 # %% ========== TEST KAGGLE ===============
+RFkag = RandomForestRegressor(n_estimators = 200, oob_score = True, \
+                              n_jobs = -1, max_features = "auto", \
+                              min_samples_leaf = 50)
+RFkag = RFkag.fit(*Xy(dat))
+
+predicted = RFkag.predict(test)
 
 
-predicted = rfr_m1.predict(test)
+rfrm2 = RandomForestRegressor
 
 # %% ============ PRINT PREDICTIONS ===========
 import csv
 with open(path+'pred.csv', 'wb') as f:
     wr = csv.writer(f, quoting=csv.QUOTE_ALL)
+    wr.writerow(['id', 'loss'])
     for i in range(len(datTest)):
-        wr.writerow([datTest.id[i], predicted[i]])
+        wr.writerow([datTest.id[i], np.expm1(predicted[i])])
 
-
+        
 # %% ================== SVM =================
 # needs major dimension reduction first
 #==============================================================================
@@ -265,11 +276,10 @@ params = {'n_estimators': 500, 'max_depth': 4, 'min_samples_split': 2,
           'learning_rate': 0.01, 'loss': 'ls'}
 gbr = GradientBoostingRegressor(**params)
 
-gbr_m1 = gbr.fit(*Xy(pdat['train']))
-test_X, test_y = Xy(pdat['test'])
-
-pred_y = gbr_m1.predict(test_X)
-print(score(test_y, pred_y))
+gbr_m1 = gbr.fit(*Xy(dat))
+#test_X, test_y = Xy(pdat['test'])
+pred_y = gbr_m1.predict(test)
+#print(score(test_y, pred_y))
 
 # ============== NEURAL NETWORKS ====================
 
