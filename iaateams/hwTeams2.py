@@ -1,6 +1,6 @@
 # 11/13/16
-
-with open('C:/Users/mail/GitHub/iaateams/data/teams_with_f3.csv', "rb") as f:
+path = 'C:/Users/mail/Documents/GitHub/iaateams/'
+with open(path + 'data/teams_with_f3.csv', "rb") as f:
     stuDat = [tuple(x.strip(" \r\n").split(",")) for x in f.readlines()]
 
 
@@ -12,12 +12,29 @@ class student:
         self.modulesLed = [tup[8]]
         self.gender = int(tup[9])   # 0 => Female, 1=> Male
         self.name = tup[10]
+        self.s1=0
 
-    def canJoin(self, team):
-        for stud in team.members:
-            vec = [x is y for (x, y) in zip(mike.teams, stud.teams)]
-            if sum(vec) > 0:
-                return False
+    def joinTeam(self, n):
+#==============================================================================
+        tm = teams[self.cohort][n]
+        if len(tm.members) >= 5:
+            return False
+#==============================================================================
+#==============================================================================
+#         elif tm.genderMix.count(self.gender) >= 3:
+#             return False
+        elif [[t for t in self.teams if t in m.teams] for m in tm.members] !=0:
+            return False
+#==============================================================================
+#==============================================================================
+#         else:    
+#==============================================================================
+        self.s1=n
+        tm.members.append(self)
+        tm.memIDs.append(self.id)
+        tm.genderMix.append(self.gender)
+        print(str(self.id) + ' joined ' + str(n))
+        return True
 
 
 class team:
@@ -25,10 +42,13 @@ class team:
         self.members = [leader]
         self.module = module+cohort
         self.memIDs = [leader.id]
+        self.genderMix = [leader.gender]
 
     def addStudent(self, stud):
         self.members.append(stud)
         self.memIDs.append(stud.id)
+        self.genderMix(stud.gender)
+        stud.teams.append
 
 # create an instance of each student
 msa17 = [student(x) for x in stuDat]
@@ -42,41 +62,18 @@ notLeads = [x for x in msa17 if x.modulesLed != ['']]
 # create a set of each cohort label (just 'b' and 'o' in this case)
 cohorts = set([x.cohort for x in msa17])
 
-# start each time with a 'lead'
+# start each team with a 'lead'
 teams = {c: [team(x, c) for x in leads if x.cohort == c] for c in cohorts}
 
-# >============================================>
-# >============================================> TEST OBJECTS
-# >============================================>
+oco = [s for s in msa17 if s.cohort == 'o']
+
+for i in range(len(oco)):
+    print(oco[i].name)
+    for j in range(len(teams['o'])):
+        if len(teams['o'][j].members) < 2:
+            k = oco[i].joinTeam(j)
+        if k:
+            print(str(i)+' '+str(j))
 
 
-t3 = teams['o'][3]
-info = (234, "O", 23, 2, 2, 3, 9, 0, "f2o", 1, "Rose",)
-mike = student(info)
 
-# test if mike can join t3
-mike.canJoin(t3)
-
-'''
-check gender balance
-compare stud with every existing member for past collaboration
-'''
-
-# compare mike with stud
-
-mike.gender
-mike.teams
-
-# add mike to t3
-t3.addStudent(mike)
-t3.memIDs
-
-
-#################################################################
-#################################################################
-#################################################################
-
-#        maleCount = [1 for stud in t3.members if stud.gender == 1]
-#        femaleCount = [-1 for stud in t3.members if stud.gender == 0]
-#        if maleCount + self.gender > 3 or femaleCount + self.gender < -3:
-#            return False
